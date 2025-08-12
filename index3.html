@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo das Sílabas</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #1c8eff;
+            --accent-color: #e71d36;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --success-color: #2ec4b6;
+            --error-color: #e71d36;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        body {
+            background-color: #f0f8ff;
+            color: var(--dark-color);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1350px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.2rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .round-info {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 10px;
+            min-height: 100px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timer {
+            background-color: var(--accent-color);
+            color: rgb(243, 246, 240);          
+            padding: 5px 10px;            
+            border-radius: 20px;
+            font-size: 3rem;
+            min-width: 135px;
+            min-height: 60px;
+            text-align: center;
+        }
+
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .word-controls, .answer-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        #next-round {
+            margin-left: auto;
+        }
+
+        .word-display {
+            background-color: var(--light-color);
+            border: 3px solid var(--primary-color);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 10;
+            border-radius: 8px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(74, 111, 165, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .game-content {
+            display: flex;
+            gap: 20px;
+        }
+
+        .students-section {
+            flex: 1;
+        }
+
+        .ranking-section {
+            width: 250px;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .ranking-title {
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 5px;
+        }
+
+        .ranking-list {
+            list-style-type: none;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+
+        .ranking-position {
+            font-weight: bold;
+            color: var(--primary-color);
+            width: 25px;
+            display: inline-block;
+        }
+
+        .ranking-name {
+            flex-grow: 1;
+        }
+
+        .ranking-points {
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+
+        .students-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .student-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--light-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .student-card.active {
+            border-color: var(--secondary-color);
+            background-color: #fff9e6;
+        }
+
+        .student-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--dark-color);
+            font-size: 1.1rem;
+        }
+
+        .student-points {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .points {
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .attempts {
+            display: flex;
+            gap: 5px;
+        }
+
+        .attempt {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .correct {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .wrong {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            font-size: 1rem;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a5a8f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e68f1a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #25a99a;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c91934;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            color: var(--dark-color);
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+            transform: translateY(-2px);
+        }
+
+        .winner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .winner.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .winner-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .winner.show .winner-content {
+            transform: scale(1);
+        }
+
+        .winner h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        .winner-name {
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .winner-points {
+            font-size: 1.5rem;
+            color: var(--dark-color);
+            margin-bottom: 20px;
+        }
+
+        .winner-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .winner-btn:hover {
+            background-color: #3a5a8f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .game-content {
+                flex-direction: column;
+            }
+            
+            .top-controls {
+                flex-direction: column;
+            }
+            
+            .word-controls, .answer-controls {
+                justify-content: center;
+            }
+            
+            #next-round {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .ranking-section {
+                width: 100%;
+                order: -1;
+                margin-bottom: 20px;
+            }
+            
+            .students-list {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .word-display {
+                font-size: 2rem;
+                min-height: 100px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .round-info {
+                font-size: 1.2rem;
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .students-list {
+                grid-template-columns: 1fr;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Jogo das Sílabas</h1>
+        
+        <div class="round-info">
+            <div>
+                Rodada <span id="current-round">1</span> de 4 - 
+                Palavras com <span id="syllables-count">1</span> sílaba
+            </div>
+            <div class="timer" id="timer">20s</div>
+        </div>
+        
+        <div class="game-area">
+            <div class="top-controls">
+                <div class="word-controls">
+                    <button class="btn btn-primary" id="draw-word">Sortear Palavra</button>
+                    <button class="btn btn-warning" id="reset-btn">Reiniciar Pontos</button>
+                </div>
+                <div class="answer-controls">
+                    <button class="btn btn-success" id="correct-btn">Acertou ✓</button>
+                    <button class="btn btn-danger" id="wrong-btn">Errou ✗</button>
+                </div>
+                <button class="btn btn-secondary" id="next-round" disabled>Próxima Rodada</button>
+            </div>
+            
+            <div class="word-display">
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <div>Sortendo palavra...</div>
+                </div>
+                <span id="current-word">Clique em "Sortear Palavra" para começar</span>
+            </div>
+            
+            <div class="game-content">
+                <div class="students-section">
+                    <div class="students-list" id="students-list">
+                        <!-- Alunos serão inseridos aqui via JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="ranking-section">
+                    <div class="ranking-title">Ranking</div>
+                    <ol class="ranking-list" id="ranking-list">
+                        <!-- Ranking será inserido aqui via JavaScript -->
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div>
+            <h4>Regras do Game</h3>
+            <p>Cada jogador joga 1 vez por rodada.</p>
+            <h4>Pontuação por Rodada.</h4>
+            <p>Rodada 1 vale 1 Ponto.</p>
+            <p>Rodada 2 vale 2 Ponto.</p>
+            <p>Rodada 3 vale 3 Ponto.</p>
+            <p>Rodada 4 vale 4 Ponto.</p>
+            <p>Quem fizer mais ponto Vence o Game.</p>
+        </div>
+
+
+    </div>
+    
+    <div class="winner" id="winner-modal">
+        <div class="winner-content">
+            <h2>Parabéns!</h2>
+            <p>O grande vencedor é:</p>
+            <div class="winner-name" id="winner-name"></div>
+            <div class="winner-points">com <span id="winner-points">0</span> pontos!</div>
+            <button class="winner-btn" id="close-winner">Fechar</button>
+        </div>
+    </div>
+    
+    <script>
+        // Dados do jogo
+        const students = [
+            "Cecília", "Elisa", "Emanuelly", "Enzo", "Estela", 
+            "Ester Victória", "Esther", "Gustavo Henrique", "Heitor Gonçalves", 
+            "Heitor Tavares", "Heloísa Vitória", "Isabelly Manoelly", "Isadora", 
+            "Kamilla Vitória", "Lara", "Luísa", "Mariana", "Nicolas", 
+            "Oliver Andrade", "Oliver Salgado", "Théo", "Valentina"
+        ].sort((a, b) => a.localeCompare(b));
+
+        const wordsBySyllables = {
+            1: ["PÉ", "SOL", "MAR", "FÉ", "MÃO", "LUA", "VIM", "RÉ", "PÁ", "DÓ"],
+            2: ["CASA", "BOCA", "DEDO", "FOCA", "GATO", "LUPA", "MAPA", "NUVEM", "PATO", "RATO", "SACO", "TATU", "VELA", "ZELO", "BOLA", "CAMA", "DADO", "FADA", "GELO", "JACA", "LIXO", "MALA", "NENA", "PANO", "QUEIJO", "ROSA", "SUCO", "TACO", "URSO", "VAGA"],
+            3: ["BANANA", "CAVALO", "ABACAXI", "BONECA", "CAMISA", "FACADA", "GALINHA", "JANELA", "LAGARTO", "MACACO", "NAVIO", "PALHAÇO", "ROBALO", "SEREIA", "UVAS", "VACINA", "XÍCARA", "TOMATE", "PANELA", "CABANA", "GIRAFA", "AVENTURA"],
+            4: ["DINOSSAURO", "ELEFANTE", "HAMBÚRGUER", "ORNITORRINCO", "QUEBRADO", "TARTARUGA", "BICICLETA", "TELEVISÃO", "PARALELEPÍPEDO", "BIBLIOTECA", "CROCODILO", "ELETRICIDADE", "FOTOGRAFIA", "HELICÓPTERO", "JABUTICABA", "KARATÊ", "LUMINÁRIA", "MACARRONADA", "TELEVISOR", "CACHOEIRA", "DESODORANTE", "ESCOVA"]
+        };
+
+        // Estado do jogo
+        let gameState = {
+            currentRound: 1,
+            currentWord: "",
+            currentStudentIndex: 0,
+            studentsData: {},
+            roundFinished: false,
+            timer: null,
+            timeLeft: 30
+        };
+
+        // Elementos do DOM
+        const elements = {
+            currentRound: document.getElementById('current-round'),
+            syllablesCount: document.getElementById('syllables-count'),
+            currentWord: document.getElementById('current-word'),
+            studentsList: document.getElementById('students-list'),
+            drawWordBtn: document.getElementById('draw-word'),
+            nextRoundBtn: document.getElementById('next-round'),
+            loading: document.getElementById('loading'),
+            winnerModal: document.getElementById('winner-modal'),
+            winnerName: document.getElementById('winner-name'),
+            winnerPoints: document.getElementById('winner-points'),
+            closeWinnerBtn: document.getElementById('close-winner'),
+            correctBtn: document.getElementById('correct-btn'),
+            wrongBtn: document.getElementById('wrong-btn'),
+            rankingList: document.getElementById('ranking-list'),
+            resetBtn: document.getElementById('reset-btn'),
+            timer: document.getElementById('timer')
+        };
+
+        // Inicializa o jogo
+        function initGame() {
+            const savedState = localStorage.getItem('syllableGameState');
+            if (savedState) {
+                gameState = JSON.parse(savedState);
+                updateRoundInfo();
+                renderStudentsList();
+                updateRanking();
+                
+                if (gameState.currentRound > 4) {
+                    showWinner();
+                }
+            } else {
+                resetGameData();
+            }
+            
+            setupEventListeners();
+            toggleAnswerButtons(false);
+        }
+
+        // Reinicia os dados do jogo
+        function resetGameData() {
+            gameState = {
+                currentRound: 1,
+                currentWord: "",
+                currentStudentIndex: 0,
+                studentsData: {},
+                roundFinished: false,
+                timer: null,
+                timeLeft: 20
+            };
+            
+            students.forEach(student => {
+                gameState.studentsData[student] = {
+                    points: 0,
+                    attempts: []
+                };
+            });
+            
+            updateRoundInfo();
+            renderStudentsList();
+            updateRanking();
+            saveGameState();
+            resetTimer();
+            elements.currentWord.textContent = 'Clique em "Sortear Palavra" para começar';
+            elements.nextRoundBtn.disabled = true;
+            elements.drawWordBtn.disabled = false;
+        }
+
+        // Atualiza as informações da rodada
+        function updateRoundInfo() {
+            elements.currentRound.textContent = gameState.currentRound;
+            elements.syllablesCount.textContent = gameState.currentRound;
+        }
+
+        // Renderiza a lista de alunos
+        function renderStudentsList() {
+            elements.studentsList.innerHTML = '';
+            
+            students.forEach((student, index) => {
+                const studentData = gameState.studentsData[student];
+                const studentCard = document.createElement('div');
+                studentCard.className = `student-card ${index === gameState.currentStudentIndex && !gameState.roundFinished ? 'active' : ''}`;
+                
+                let attemptsHtml = '';
+                for (let i = 0; i < 4; i++) {
+                    if (i < studentData.attempts.length) {
+                        const attemptClass = studentData.attempts[i] ? 'correct' : 'wrong';
+                        const attemptSymbol = studentData.attempts[i] ? '✓' : '✗';
+                        attemptsHtml += `<div class="attempt ${attemptClass}">${attemptSymbol}</div>`;
+                    } else {
+                        attemptsHtml += '<div class="attempt"></div>';
+                    }
+                }
+                
+                studentCard.innerHTML = `
+                    <div class="student-name">${student}</div>
+                    <div class="student-points">
+                        <div class="points">${studentData.points} pts</div>
+                        <div class="attempts">${attemptsHtml}</div>
+                    </div>
+                `;
+                
+                elements.studentsList.appendChild(studentCard);
+            });
+        }
+
+        // Atualiza o ranking
+        function updateRanking() {
+            elements.rankingList.innerHTML = '';
+            
+            const rankedStudents = Object.entries(gameState.studentsData)
+                .map(([name, data]) => ({ name, points: data.points }))
+                .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+            
+            rankedStudents.forEach((student, index) => {
+                const rankingItem = document.createElement('li');
+                rankingItem.className = 'ranking-item';
+                rankingItem.innerHTML = `
+                    <span class="ranking-position">${index + 1}.</span>
+                    <span class="ranking-name">${student.name}</span>
+                    <span class="ranking-points">${student.points}</span>
+                `;
+                elements.rankingList.appendChild(rankingItem);
+            });
+        }
+
+        // Sorteia uma nova palavra
+        function drawWord() {
+            if (gameState.currentStudentIndex >= students.length) {
+                alert("Todos os alunos já jogaram nesta rodada!");
+                return;
+            }
+            
+            elements.loading.style.display = 'flex';
+            elements.currentWord.textContent = '';
+            elements.drawWordBtn.disabled = true;
+            toggleAnswerButtons(false);
+            resetTimer();
+            
+            setTimeout(() => {
+                const syllableCount = gameState.currentRound;
+                const possibleWords = wordsBySyllables[syllableCount];
+                gameState.currentWord = possibleWords[Math.floor(Math.random() * possibleWords.length)];
+                
+                elements.currentWord.textContent = gameState.currentWord;
+                elements.loading.style.display = 'none';
+                toggleAnswerButtons(true);
+                startTimer();
+                renderStudentsList();
+            }, 1500);
+        }
+
+        // Alterna a visibilidade dos botões de resposta
+        function toggleAnswerButtons(show) {
+            elements.correctBtn.style.display = show ? 'block' : 'none';
+            elements.wrongBtn.style.display = show ? 'block' : 'none';
+        }
+
+        // Inicia o timer
+        function startTimer() {
+            resetTimer();
+            gameState.timeLeft = 20;
+            updateTimerDisplay();
+            
+            gameState.timer = setInterval(() => {
+                gameState.timeLeft--;
+                updateTimerDisplay();
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timer);
+                    registerAnswer(false);
+                }
+            }, 1000);
+        }
+
+        // Atualiza o display do timer
+        function updateTimerDisplay() {
+            elements.timer.textContent = `${gameState.timeLeft}s`;
+            
+            if (gameState.timeLeft <= 10) {
+                elements.timer.style.backgroundColor = '#dc3545';
+            } else if (gameState.timeLeft <= 20) {
+                elements.timer.style.backgroundColor = '#fd7e14';
+            } else {
+               elements.timer.style.backgroundColor = "var(--accent-color)";
+
+            }
+        }
+
+        // Reseta o timer
+        function resetTimer() {
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+            }
+            gameState.timeLeft = 20;
+            elements.timer.textContent = '20s';
+            elements.timer.style.backgroundColor = "var(--accent-color)";
+
+        }
+
+        // Registra a resposta do aluno
+        function registerAnswer(correct) {
+            resetTimer();
+            
+            const currentStudent = students[gameState.currentStudentIndex];
+            const syllableCount = gameState.currentRound;
+            
+            gameState.studentsData[currentStudent].attempts.push(correct);
+            if (correct) {
+                gameState.studentsData[currentStudent].points += syllableCount;
+            }
+            
+            gameState.currentStudentIndex++;
+            
+            if (gameState.currentStudentIndex >= students.length) {
+                gameState.roundFinished = true;
+                elements.nextRoundBtn.disabled = false;
+            }
+            
+            toggleAnswerButtons(false);
+            renderStudentsList();
+            updateRanking();
+            saveGameState();
+            
+            if (!gameState.roundFinished) {
+                elements.drawWordBtn.disabled = false;
+                elements.currentWord.textContent = 'Próximo aluno: ' + students[gameState.currentStudentIndex];
+            } else {
+                elements.currentWord.textContent = 'Rodada concluída! Clique em "Próxima Rodada"';
+            }
+        }
+
+        // Avança para a próxima rodada
+        function nextRound() {
+            gameState.currentRound++;
+            gameState.currentStudentIndex = 0;
+            gameState.roundFinished = false;
+            
+            if (gameState.currentRound <= 4) {
+                updateRoundInfo();
+                renderStudentsList();
+                elements.drawWordBtn.disabled = false;
+                elements.nextRoundBtn.disabled = true;
+                elements.currentWord.textContent = 'Clique em "Sortear Palavra" para começar';
+                saveGameState();
+            } else {
+                showWinner();
+            }
+        }
+
+        // Mostra o modal com o vencedor
+        function showWinner() {
+            let winner = '';
+            let maxPoints = -1;
+            
+            for (const student in gameState.studentsData) {
+                if (gameState.studentsData[student].points > maxPoints) {
+                    maxPoints = gameState.studentsData[student].points;
+                    winner = student;
+                }
+            }
+            
+            elements.winnerName.textContent = winner;
+            elements.winnerPoints.textContent = maxPoints;
+            elements.winnerModal.classList.add('show');
+            localStorage.removeItem('syllableGameState');
+        }
+
+        // Salva o estado do jogo
+        function saveGameState() {
+            localStorage.setItem('syllableGameState', JSON.stringify(gameState));
+        }
+
+        // Configura os event listeners
+        function setupEventListeners() {
+            elements.drawWordBtn.addEventListener('click', drawWord);
+            elements.nextRoundBtn.addEventListener('click', nextRound);
+            elements.closeWinnerBtn.addEventListener('click', () => {
+                elements.winnerModal.classList.remove('show');
+                location.reload();
+            });
+            
+            elements.correctBtn.addEventListener('click', () => registerAnswer(true));
+            elements.wrongBtn.addEventListener('click', () => registerAnswer(false));
+            
+            elements.resetBtn.addEventListener('click', () => {
+                if (confirm('Tem certeza que deseja reiniciar todos os pontos?')) {
+                    resetGameData();
+                }
+            });
+        }
+
+        // Inicia o jogo quando a página carrega
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
